@@ -1,0 +1,110 @@
+<body style="padding:0px; margin:0px;">
+
+<script type="text/javascript" src="jquery.js"></script>
+<script type="text/javascript" src="/_ah/channel/jsapi"></script>
+
+<div style="position:absolute; left:0px; top:0px;">
+  <a href="http://www.github.com/tbocs" target="_blank"><img src="fork_github.png" /></a>
+</div>
+
+<div style="background-image:url('background.jpg'); background-position:center; padding: 0px; height:100%;">
+
+  <table style="width:100%; height:100%">
+    <tr><td style="vertical-align:">
+      <div align="center" >
+        <div id="display-mother" style="height:400px;width:540px;overflow-x:hidden;overflow-y:scroll;">
+          <div id="display" style="width:520px;word-wrap:break-word;text-align:left;color:white;"></div>
+        </div>
+        <div style="text-align:left; color:white; width: 600px;">
+          Message:<input type="text" size="40" id="message"></input><br/>
+          Nickname:<input type="text" id="nickname"></input>
+        </div>
+      </div>
+    </td></tr><tr><td style="height: 60px;">
+      <table style="width:100%"><tr>
+        <td style="text-align: right; color:white;">(C) 2011 Sam Zhai @ The Beauty of Computer Science</td>
+          <td style="width:160px; text-align:center;">
+            <img src="http://code.google.com/appengine/images/appengine-silver-120x30.gif" alt="Powered by Google App Engine"/>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+
+</div>
+
+
+
+<script type="text/javascript">
+
+  var isConnected = false;
+  var token_key = "{{html .}}";
+  
+  socketPutMessage = function (path_, status_, nickname_, message_) {
+    $.post(path_, {Status: status_, Nickname: nickname_, Message: message_}, null); 
+  }
+
+  socketOpened = function () {
+    isConnected = true;
+  }
+
+  debug = function (string) {
+    $("#divdebug").html($("#divdebug").html() + string + "<br/>");
+  }
+
+  socketGotMessage = function (arg) {
+    arg_obj = JSON.parse(arg.data);
+    var target_selector = 'div[name=\"' + arg_obj["Nickname"] + '\"]';
+    var $target_block;
+    if ($(target_selector).length == 0) $target_block = null
+    else if ($(target_selector).length == 1) $target_block = $(target_selector);
+    else $target_block = $(target_selector).last();
+
+    if ($target_block == null || $target_block.attr("status") == 'true') {
+      $("#display").html( $("#display").html() + "<div status='false' name='" +
+        arg_obj["Nickname"] + "' style='background-color:rgba(96, 0, 0, 0.3); padding: 2px;'><pre style='margin-left:10px;'>" + arg_obj["Nickname"] + " says:</pre><p style='margin:5px 30px;'>" +
+        arg_obj["Message"] + "</p></div>");
+    } else {
+      $target_block.html("<pre style='margin-left:10px;'>" + arg_obj["Nickname"] +
+                         " says:</pre><p style='margin:5px 30px;'>" +
+                         arg_obj["Message"] + "</p>");
+      if (arg_obj['Status'] == true) {
+        $target_block.attr("status", 'true');
+        $target_block.css("background-color", "transparent");
+      }
+    }
+    $("#display-mother").scrollTop($("#display").height());
+  }
+
+  socketError = function (arg) {
+    switch (arg.code) {
+      case 0: socketClosed();
+    }
+  }
+
+  socketClosed = function () {
+    isConnected = false;
+  }
+
+  $(document).ready(function () {
+    channel = new goog.appengine.Channel(token_key);
+    socket = channel.open();
+    socket.onopen = socketOpened;
+    socket.onmessage = socketGotMessage;
+    socket.onerror = socketError
+    socket.onclose = socketClosed;
+  });
+
+  $("#message").keyup(function(event) {
+    var message = $("#message").val();
+    var nickname = $("#nickname").val();
+    if (nickname == "") nickname = "Anonymous";
+    if (event.which == 13) {
+      socketPutMessage("/callback", true, nickname, message);
+      $("#message").val("");
+    } else {
+      socketPutMessage("/callback", false, nickname, message);
+    }
+  });
+
+</script>
+</body>
