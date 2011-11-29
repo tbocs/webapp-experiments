@@ -14,7 +14,7 @@ Simply run it on Google App Engine at [appspot.com](http://www.appspot.com) or
 run Google App Engine development server locally. For more information, please
 visit <http://code.google.com/appengine/>.
 
-## Licence
+## License
 
 This package is free software: you can redistribute the including programs and
 source files created by the author and/or modify them under the terms of the
